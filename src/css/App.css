@@ -24,7 +24,8 @@
 }
 
 .loader {
-  background-image: url(../images/ajax_loader.gif);
+  background-image: url(../images/loading-purple.gif);
+  background-size: 30px 30px;
   background-repeat: no-repeat;
   background-position: center center;
 }

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import uuid from 'uuid'
 import './css/normalize.css';
 import './css/html5bp.css';
 import './css/App.css';
@@ -7,7 +8,9 @@ import placeholder1 from './images/article_placeholder_1.jpg';
 import placeholder2 from './images/article_placeholder_2.jpg';
 import Header from './Header.js';
 import Article from './Article.js';
-import Loader from './Loader.js'
+import Loader from './Loader.js';
+import PopUp from './PopUp.js';
+
 
 class App extends Component {
   constructor(props) {
@@ -16,9 +19,13 @@ class App extends Component {
     this.state = {
       showLoader: false,
       articles: [],
+      // reserving this for the 'filter by source' functionality
+      sourceFilter: '',
     }
 
-    this.getArticle = this.getArticle.bind(this)
+    this.getArticle = this.getArticle.bind(this);
+    this.getBuzzdFeed = this.getBuzzFeed.bind(this);
+    this.getReddit = this.getReddit.bind(this);
   }
   // constructor is only really needed if you have functions to bind
   // if there aren't any, you can go directly to setting the initial state
@@ -28,25 +35,53 @@ class App extends Component {
     this.setState({
       showLoader: true
     })
+    this.getBuzzFeed()
+    this.getReddit()
+    // I need to rewrite these as promise notation so the loader shows up until it ALL has run
+    // otherwise each function will run and then the loader is turned off before the promises are complete
+    this.setState({
+      showLoader: false
+    })
+  }
+
+  getReddit() {
     return fetch('https://www.reddit.com/r/all.json?sort=top&limit=20')
     .then(result => result.json())
-    .then(data => {
-      console.log(data.data.children)
+    .then(reddit => {
+      // just testing for chronological order (not planning to include just yet)
+      const articlesReddit = reddit.data.children.forEach(article => {
+          article.data.source = 'Reddit',
+          // have to fix uuid - how do i reference it correctly in code?
+          article.data.articleId = uuid})
+          // need to remap articles to match my preferred format (category, timestamp, etc.)
       this.setState({
-        articles: data.data.children
+        articles: reddit.data.children
+      })
+      return reddit.data.children
+    }).catch(err => {console.log('Error: ',err)})
+  }
+
+  getBuzzFeed() {
+    return fetch('https://accesscontrolalloworiginall.herokuapp.com/https://www.buzzfeed.com/api/v2/feeds/index')
+    .then(result => result.json())
+    .then(buzzfeed => {
+      // need to build if statement for catching errors - "success" : 1
+      const buzzFeedArticles = buzzfeed.big_stories.forEach(article => {
+        // this isn't working
+        article.data.source = 'BuzzFeed'})
+      console.log(buzzfeed.big_stories)
+      this.setState({
+        // neither is this
+        articles: this.state.artciles.push(buzzfeed.big_stories),
       })
       console.log(this.state.articles)
-      this.setState({
-        showLoader: false
-      })
-      return data.data.children
+      return buzzfeed.big_stories
     }).catch(err => {console.log('Error: ',err)})
   }
 
   componentDidMount() {
-    // need to work out how to get the city from input into componentDidMount
         this.getArticle()
-            .catch(err => console.log('Error,', err))
+        // do I need to bring the catch for errors back? I need getArticle to return an object form the promises in it
   }
 
   render() {

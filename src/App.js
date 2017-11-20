@@ -20,49 +20,41 @@ class App extends Component {
       showLoader: false,
       articles: [],
       // reserving this for the 'filter by source' functionality
-      sourceFilter: '',
+      filterSource: '',
+      filterTitle: '',
     }
 
-    this.getArticle = this.getArticle.bind(this);
     this.getBuzzdFeed = this.getBuzzFeed.bind(this);
     this.getReddit = this.getReddit.bind(this);
     this.getMashable = this.getMashable.bind(this);
+    this.filterArticles = this.filterArticles.bind(this);
   }
   // constructor is only really needed if you have functions to bind
   // if there aren't any, you can go directly to setting the initial state
   // even when done directly, you still need to access state through this.state to refence states in components
 
-  getArticle() {
-    this.setState({
-      showLoader: true
-    })
-    this.getBuzzFeed()
-    this.getReddit()
-    this.getMashable()
-    // I need to rewrite these as promise notation so the loader shows up until it ALL has run
-    // otherwise each function will run and then the loader is turned off before the promises are complete
-    this.setState({
-      showLoader: false
-    })
-  }
-
   getReddit() {
     return fetch('https://www.reddit.com/r/all.json?sort=top&limit=20')
     .then(result => result.json())
     .then(reddit => {
-      // just testing for chronological order (not planning to include just yet)
-      const articlesReddit = reddit.data.children.forEach(article => {
-          article.data.source = 'Reddit'
-          // have to fix uuid - how do i reference it correctly in code?
-          article.data.articleId = uuid
-          // need to remap articles to match my preferred format (category, timestamp, etc.)
+      return reddit.data.children.forEach(article => {
+          const redditArticle = {
+            title: article.data.title,
+            URL: `https://www.reddit.com${article.data.permalink}`,
+            thumbnail: article.data.thumbnail,
+            score: article.data.score,
+            category: article.data.subreddit,
+            articleId: uuid(),
+            content: '',
+            source: 'Reddit',
+            timestamp: article.data.created,
+            }
           const newArticles = this.state.articles
-          newArticles.push(article)
+          newArticles.push(redditArticle)
           this.setState({
             articles: newArticles
           })
         })
-      return reddit.data.children
     }).catch(err => {console.log('Error: ',err)})
   }
 
@@ -70,22 +62,25 @@ class App extends Component {
     return fetch('https://accesscontrolalloworiginall.herokuapp.com/https://www.buzzfeed.com/api/v2/feeds/index')
     .then(result => result.json())
     .then(buzzfeed => {
-      // need to build if statement for catching errors - "success" : 1
-      buzzfeed.big_stories.forEach(article => {
-        article.source = 'BuzzFeed'
-        const newArticles = this.state.articles
-        newArticles.push(article)
-        this.setState({
-          articles: newArticles,
+      return buzzfeed.big_stories.forEach(article => {
+          const buzzfeedArticle = {
+            title: article.title,
+            URL: `https://www.buzzfeed.com/${article.canonical_path}`,
+            thumbnail: article.images.small,
+            score: article.impressions,
+            category: article.category,
+            articleId: uuid(),
+            content: '',
+            source: 'BuzzFeed',
+            timestamp: article.published,
+            }
+          // need to remap articles to match my preferred format (category, timestamp, etc.)
+          const newArticles = this.state.articles
+          newArticles.push(buzzfeedArticle)
+          this.setState({
+            articles: newArticles
+          })
         })
-      })
-      console.log(buzzfeed.big_stories)
-      console.log(this.state.articles)
-      /* this.setState({
-        // neither is this
-        articles: this.state.artciles.push(buzzfeed.big_stories),
-      }) */
-      return buzzfeed.big_stories
     }).catch(err => {console.log('Error: ',err)})
   }
 
@@ -93,34 +88,58 @@ class App extends Component {
     return fetch('https://accesscontrolalloworiginall.herokuapp.com/http://mashable.com/api/v1/posts')
     .then(result => result.json())
     .then(mashable => {
-      // need to build if statement for catching errors - "success" : 1
-      mashable.posts.forEach(article => {
-        article.source = 'Mashable'
-        const newArticles = this.state.articles
-        newArticles.push(article)
-        this.setState({
-          articles: newArticles,
+      return mashable.posts.forEach(article => {
+          const mashableArticle = {
+            title: article.title,
+            URL: article.link,
+            thumbnail: article.images.i540x304,
+            score: article.shares.total,
+            category: article.channel_name,
+            articleId: uuid(),
+            content: article.content.excerpt,
+            source: 'Mashable',
+            timestamp: new Date(article.post_date).getTime() /1000,
+            }
+          // need to remap articles to match my preferred format (category, timestamp, etc.)
+          const newArticles = this.state.articles
+          newArticles.push(mashableArticle)
+          // MOVE SET STATE OUT OF LOOP!
+          this.setState({
+            articles: newArticles
+          })
         })
-      })
-      console.log(mashable.posts)
-      console.log(this.state.articles)
-      /* this.setState({
-        // neither is this
-        articles: this.state.artciles.push(buzzfeed.big_stories),
-      }) */
-      return mashable.posts
     }).catch(err => {console.log('Error: ',err)})
   }
 
+  filterArticles(searchFilter,sourceFilter) {
+    /* this.setState({
+      filterSource: sourceFilter,
+      filterTitle: searchFilter,
+    }) */
+    console.log(this.state.filterSource,this.state.filterTitle)
+  }
+
   componentDidMount() {
-        this.getArticle()
+    this.getBuzzFeed()
+    .then(this.getReddit())
+    .then(this.getMashable())
+    // I need to rewrite these as promise notation so the loader shows up until it ALL has run
+    // otherwise each function will run and then the loader is turned off before the promises are complete
+    .then(
+      this.setState({
+        articles: this.state.articles.sort(function(a, b) {
+          return a.timestamp - b.timestamp
+        })
+      })
+    )
+    console.log(this.state.articles)
         // do I need to bring the catch for errors back? I need getArticle to return an object form the promises in it
   }
 
   render() {
     return (
       <div>
-        <Header />
+        <Header onFilter={this.filterArticles}/>
         <Loader showLoader={this.state.showLoader}/>
         {/* in react, just return 'null' to not display it */}
         <div className="popUp" style={{display: "none"}}>
@@ -134,19 +153,14 @@ class App extends Component {
           </div>
         </div>
         <section id="main" className="container">
-          {/* this.state.articles.map(article =>
-            // need to remap properties of article objects to avoid the '.data' from reddit
-            <Article title={article.data.title} category={article.data.subreddit} image={article.data.thumbnail} score={article.data.score}/>
-          ) */}
+          {this.state.articles.map(article =>
+            <Article title={article.title} category={article.category} image={article.thumbnail} score={article.score} key={article.articleId}/>
+          )}
 
         </section>
       </div>
     );
   }
-
-  // helpful to ensure you're sending all the data correctly to your components
-  // if a required prop is missing or the wrong type is sent, React will log this error to the console
-
 
 }
 

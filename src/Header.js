@@ -2,6 +2,16 @@ import React, { Component } from 'react'
 import searchIcon from './images/search.png';
 
 class Header extends Component {
+  constructor(props) {
+    super(props)
+
+    this.handleFilter = this.handleFilter.bind(this);
+  }
+
+  handleFilter(searchFilter, sourceFilter) {
+    this.props.onFilter(searchFilter,sourceFilter)
+  }
+
   render() {
     return(
       <header>
@@ -9,11 +19,11 @@ class Header extends Component {
           <a href="#"><h1>Feedr</h1></a>
           <nav>
             <ul>
-              <li><a href="#">News Source: <span>Source Name</span></a>
+              <li><a href="#">"News" Source: <span>All</span></a>
                 <ul>
-                    <li><a href="#">Source 1</a></li>
-                    <li><a href="#">Source 2</a></li>
-                    <li><a href="#">Source 3</a></li>
+                    <li><a href="#" onClick={this.handleFilter('','Reddit')}>Reddit</a></li>
+                    <li><a href="#">BuzzFeed</a></li>
+                    <li><a href="#">Mashable</a></li>
                 </ul>
               </li>
             </ul>

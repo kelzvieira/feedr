@@ -12,6 +12,10 @@ class Header extends Component {
     this.props.onFilter(searchFilter,sourceFilter)
   }
 
+  handleAtivateSearch() {
+    document.getElementById('search').input.className = 'active'
+  }
+
   render() {
     return(
       <header>
@@ -21,15 +25,15 @@ class Header extends Component {
             <ul>
               <li><a href="#">"News" Source: <span>All</span></a>
                 <ul>
-                    <li><a href="#" onClick={this.handleFilter('','Reddit')}>Reddit</a></li>
-                    <li><a href="#">BuzzFeed</a></li>
-                    <li><a href="#">Mashable</a></li>
+                    <li><a>Reddit</a></li>
+                    <li><a>BuzzFeed</a></li>
+                    <li><a>Mashable</a></li>
                 </ul>
               </li>
             </ul>
             <section id="search">
               <input type="text" name="name" value="" />
-              <a href="#"><img src={searchIcon} alt="" /></a>
+              <a href="#" onClick={this.handleActivateSearch}><img src={searchIcon} alt="" /></a>
             </section>
           </nav>
           <div className="clearfix"></div>

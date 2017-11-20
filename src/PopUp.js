@@ -4,19 +4,17 @@ import PropTypes from 'prop-types';
 class PopUp extends Component {
   render() {
     return(
-      <article className="article">
-        <section className="featuredImage">
-          <img src={this.props.image} alt="" />
-        </section>
-        <section className="articleContent">
-            <a href="#"><h3>{this.props.title}</h3></a>
-            <h6>{this.props.category}</h6>
-        </section>
-        <section className="impressions">
-          {this.props.score}
-        </section>
-        <div className="clearfix"></div>
-      </article>
+      // add onlcick event to article where uuid is passed to show that article's content
+      <div className="popUp" style={{display: "none"}}>
+        <a href="#" className="closePopUp">X</a>
+        <div className="container">
+          <h1>Article title here</h1>
+          <p>
+            Article description/content here.
+          </p>
+          <a href="#" className="popUpAction" target="_blank">Read more from source</a>
+        </div>
+      </div>
     );
   }
 }

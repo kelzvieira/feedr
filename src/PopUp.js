@@ -1,14 +1,27 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types';
 
 class PopUp extends Component {
+  constructor(props) {
+    super(props)
+
+    this.togglePopUp = this.togglePopUp.bind(this);
+  }
+
+togglePopUp(id) {
+  if (id === "") {
+    return ""
+  } else {
+    return "block"
+  }
+}
+
   render() {
     return(
       // add onlcick event to article where uuid is passed to show that article's content
-      <div className="popUp" style={{display: "none"}}>
+      <div className="popUp" style={{display: this.togglePopUp(this.props.id)}}>
         <a href="#" className="closePopUp">X</a>
         <div className="container">
-          <h1>Article title here</h1>
+          <h1>{this.props.articles.filter(article => article.articleId === this.props.id).title}</h1>
           <p>
             Article description/content here.
           </p>
@@ -17,13 +30,6 @@ class PopUp extends Component {
       </div>
     );
   }
-}
-
-PopUp.PropTypes = {
-  title: PropTypes.string.isRequired,
-  image: PropTypes.string.isRequired,
-  category: PropTypes.string,
-  score: PropTypes.number
 }
 
 export default PopUp

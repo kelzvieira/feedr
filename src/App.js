@@ -1,15 +1,13 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import uuid from 'uuid'
 import './css/normalize.css';
 import './css/html5bp.css';
 import './css/App.css';
 import placeholder1 from './images/article_placeholder_1.jpg';
-import placeholder2 from './images/article_placeholder_2.jpg';
 import Header from './Header.js';
 import Article from './Article.js';
-import Loader from './Loader.js';
 import PopUp from './PopUp.js';
+import Loader from './Loader.js';
 
 
 class App extends Component {
@@ -21,11 +19,13 @@ class App extends Component {
       articles: [],
       filterSource: '',
       filterTitle: '',
+      popUpId: '',
     }
 
     this.getBuzzdFeed = this.getBuzzFeed.bind(this);
     this.getReddit = this.getReddit.bind(this);
     this.getMashable = this.getMashable.bind(this);
+    this.launchPopUp = this.launchPopUp.bind(this);
     // this.filterArticles = this.filterArticles.bind(this);
   }
   // constructor is only really needed if you have functions to bind
@@ -45,7 +45,7 @@ class App extends Component {
             score: article.data.score,
             category: article.data.subreddit,
             articleId: uuid(),
-            content: '',
+            content: article.selftext,
             source: 'Reddit',
             timestamp: article.data.created,
             }
@@ -67,7 +67,7 @@ class App extends Component {
             score: article.impressions,
             category: article.category,
             articleId: uuid(),
-            content: '',
+            content: article.description,
             source: 'BuzzFeed',
             timestamp: article.published,
           }
@@ -107,8 +107,19 @@ class App extends Component {
     console.log(this.state.filterSource,this.state.filterTitle)
   } */
 
+  launchPopUp(id) {
+    this.setState({
+      popUpId: id,
+    })
+  }
+
   componentDidMount() {
+    // not neccessary to pass in existing this.state.articles as it would be an empty array on componentDidMount
+    // but this way it's scaleable for when calling the next set of articles when a user scrolls all the way down
+    // this exact code can be made into another function and then called here later on
     this.getReddit(this.state.articles)
+    // this runs getReddit, returns the rreddit articles and passes them as arguments to the next function
+    // but only once the API call has resolved, ensuring there's no mutliple state setting
     .then(articles => this.getBuzzFeed(articles))
     .then(articles => this.getMashable(articles))
     .then(articles => {
@@ -116,9 +127,11 @@ class App extends Component {
         articles: articles.sort(function(a, b) {
           return a.timestamp - b.timestamp
         }),
+        // this finalises the list of articles and removes the loader from display
         showLoader: false,
       })
     }).catch(err => {console.log('Error: ',err)})
+    // just to check what data is s=coming in, log the full set of articles to the console
     console.log(this.state.articles)
   }
 
@@ -127,16 +140,18 @@ class App extends Component {
       <div>
         <Header onFilter={this.filterArticles}/>
         <Loader showLoader={this.state.showLoader}/>
-        {/* will need to pass uuid  to popUp */}
-        <PopUp />
+        {/* this.state.articles
+          .filter(article => article.articleId.includes(this.state.popUpId))
+          .map(article =>
+            <PopUp articles={this.state.articles} id={this.state.popUpId}/>
+          ) */}
         <section id="main" className="container">
           {this.state.articles
             .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
             .filter(article => article.source.toLowerCase().includes(this.state.filterSource.toLowerCase()))
             .map(article =>
-            <Article title={article.title} category={article.category} image={article.thumbnail} score={article.score} key={article.articleId}/>
+            <Article title={article.title} category={article.category} image={article.thumbnail} score={article.score} key={article.articleId} onPopUp={this.launchPopUp}/>
           )}
-
         </section>
       </div>
     );

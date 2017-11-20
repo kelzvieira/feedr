@@ -2,6 +2,17 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 
 class Article extends Component {
+
+  constructor(props) {
+    super(props)
+
+    this.popUp = this.popUp.bind(this);
+  }
+
+  popUp() {
+    this.props.onPopUp(this.props.key)
+  }
+
   render() {
     return(
       <article className="article">
@@ -9,7 +20,7 @@ class Article extends Component {
           <img src={this.props.image} alt="" />
         </section>
         <section className="articleContent">
-            <a href="#"><h3>{this.props.title}</h3></a>
+            <a href="#" id="article-title" onClick={this.popUp}><h3>{this.props.title}</h3></a>
             <h6>{this.props.category}</h6>
         </section>
         <section className="impressions">
@@ -25,7 +36,8 @@ Article.PropTypes = {
   title: PropTypes.string.isRequired,
   image: PropTypes.string.isRequired,
   category: PropTypes.string,
-  score: PropTypes.number
+  score: PropTypes.number,
+  key: PropTypes.number.isRequired,
 }
 
 export default Article

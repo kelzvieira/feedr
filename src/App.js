@@ -26,6 +26,7 @@ class App extends Component {
     this.getArticle = this.getArticle.bind(this);
     this.getBuzzdFeed = this.getBuzzFeed.bind(this);
     this.getReddit = this.getReddit.bind(this);
+    this.getMashable = this.getMashable.bind(this);
   }
   // constructor is only really needed if you have functions to bind
   // if there aren't any, you can go directly to setting the initial state
@@ -37,6 +38,7 @@ class App extends Component {
     })
     this.getBuzzFeed()
     this.getReddit()
+    this.getMashable()
     // I need to rewrite these as promise notation so the loader shows up until it ALL has run
     // otherwise each function will run and then the loader is turned off before the promises are complete
     this.setState({
@@ -50,13 +52,16 @@ class App extends Component {
     .then(reddit => {
       // just testing for chronological order (not planning to include just yet)
       const articlesReddit = reddit.data.children.forEach(article => {
-          article.data.source = 'Reddit',
+          article.data.source = 'Reddit'
           // have to fix uuid - how do i reference it correctly in code?
-          article.data.articleId = uuid})
+          article.data.articleId = uuid
           // need to remap articles to match my preferred format (category, timestamp, etc.)
-      this.setState({
-        articles: reddit.data.children
-      })
+          const newArticles = this.state.articles
+          newArticles.push(article)
+          this.setState({
+            articles: newArticles
+          })
+        })
       return reddit.data.children
     }).catch(err => {console.log('Error: ',err)})
   }
@@ -66,16 +71,44 @@ class App extends Component {
     .then(result => result.json())
     .then(buzzfeed => {
       // need to build if statement for catching errors - "success" : 1
-      const buzzFeedArticles = buzzfeed.big_stories.forEach(article => {
-        // this isn't working
-        article.data.source = 'BuzzFeed'})
+      buzzfeed.big_stories.forEach(article => {
+        article.source = 'BuzzFeed'
+        const newArticles = this.state.articles
+        newArticles.push(article)
+        this.setState({
+          articles: newArticles,
+        })
+      })
       console.log(buzzfeed.big_stories)
-      this.setState({
+      console.log(this.state.articles)
+      /* this.setState({
         // neither is this
         articles: this.state.artciles.push(buzzfeed.big_stories),
-      })
-      console.log(this.state.articles)
+      }) */
       return buzzfeed.big_stories
+    }).catch(err => {console.log('Error: ',err)})
+  }
+
+  getMashable() {
+    return fetch('https://accesscontrolalloworiginall.herokuapp.com/http://mashable.com/api/v1/posts')
+    .then(result => result.json())
+    .then(mashable => {
+      // need to build if statement for catching errors - "success" : 1
+      mashable.posts.forEach(article => {
+        article.source = 'Mashable'
+        const newArticles = this.state.articles
+        newArticles.push(article)
+        this.setState({
+          articles: newArticles,
+        })
+      })
+      console.log(mashable.posts)
+      console.log(this.state.articles)
+      /* this.setState({
+        // neither is this
+        articles: this.state.artciles.push(buzzfeed.big_stories),
+      }) */
+      return mashable.posts
     }).catch(err => {console.log('Error: ',err)})
   }
 
@@ -101,9 +134,10 @@ class App extends Component {
           </div>
         </div>
         <section id="main" className="container">
-          {this.state.articles.map(article =>
+          {/* this.state.articles.map(article =>
+            // need to remap properties of article objects to avoid the '.data' from reddit
             <Article title={article.data.title} category={article.data.subreddit} image={article.data.thumbnail} score={article.data.score}/>
-          )}
+          ) */}
 
         </section>
       </div>

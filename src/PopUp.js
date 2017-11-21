@@ -21,11 +21,11 @@ togglePopUp(id) {
       <div className="popUp" style={{display: this.togglePopUp(this.props.id)}}>
         <a href="#" className="closePopUp">X</a>
         <div className="container">
-          <h1>{this.props.articles.filter(article => article.articleId === this.props.id).title}</h1>
+          <h1>{this.props.articles.title}</h1>
           <p>
-            Article description/content here.
+            {this.props.articles.description}
           </p>
-          <a href="#" className="popUpAction" target="_blank">Read more from source</a>
+          <a href={this.props.articles.url} className="popUpAction" target="_blank">Read more from source</a>
         </div>
       </div>
     );

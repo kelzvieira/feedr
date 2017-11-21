@@ -20,8 +20,8 @@ class Article extends Component {
           <img src={this.props.image} alt="" />
         </section>
         <section className="articleContent">
-            <a href="#" id="article-title" onClick={this.popUp}><h3>{this.props.title}</h3></a>
-            <h6>{this.props.category}</h6>
+            <a href="#" id="article-title" onClick={() => this.popUp()}><h3>{this.props.title}</h3></a>
+            <h6>{this.props.category}&nbsp;&nbsp;&nbsp;<b>source: {this.props.source}</b></h6>
         </section>
         <section className="impressions">
           {this.props.score}
@@ -37,7 +37,7 @@ Article.PropTypes = {
   image: PropTypes.string.isRequired,
   category: PropTypes.string,
   score: PropTypes.number,
-  key: PropTypes.number.isRequired,
+  key: PropTypes.string.isRequired,
 }
 
 export default Article

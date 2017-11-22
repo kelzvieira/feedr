@@ -13,7 +13,7 @@ class Header extends Component {
   }
 
   handleAtivateSearch() {
-    document.getElementById('search').input.className = 'active'
+    document.getElementById('search').className = 'active'
   }
 
   render() {

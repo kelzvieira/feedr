@@ -52,6 +52,8 @@ class App extends Component {
             category: article.data.subreddit,
             articleId: uuid(),
             content: article.selftext,
+            // I've included these just to make it visible that sorting is working
+            // can remove in final build (but I kind of like them)
             source: 'Reddit',
             timestamp: article.data.created_utc,
             }
@@ -139,6 +141,7 @@ class App extends Component {
     // but only once the API call has resolved (it's a promise), ensuring there's no mutliple state setting
     .then(articles => this.getBuzzFeed(articles, this.state.loadCount))
     .then(articles => this.getMashable(articles, this.state.loadCount))
+    // replace .then notation with promise.all()
     .then(articles => {
       this.setState({
         articles: articles.sort(function(a, b) {
@@ -169,6 +172,7 @@ class App extends Component {
           {this.state.articles
             // .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
             .filter(article => article.source.includes(this.state.filterSource))
+            // look at spread operator to pass state as an object {...this.state}
             .map(article =>
             <Article
               title={article.title}
@@ -181,6 +185,7 @@ class App extends Component {
               onFilter={this.filterArticles}
             />
           )
+          // use componentDidMount with the length of the articles array - 20 to start fetching the next set of articles when there's only
         }
         </section>
         {/* ADD BUTTON TO LOAD MORE ARTICLES */}

@@ -198,11 +198,12 @@ nav ul ul li {
   float: left;
   margin: 1.5%;
   max-width: 60px;
+  overflow: hidden;
+  border-radius: 50px;
 }
 
 .article .featuredImage img {
-  max-width: 100%;
-  border-radius: 50px;
+  height: 60px;
 }
 
 .article .articleContent {

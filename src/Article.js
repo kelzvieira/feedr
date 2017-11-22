@@ -17,7 +17,7 @@ class Article extends Component {
   }
 
   setScore(score){
-    // sets 0 value of null scores - eg. BuzzFeed caches their API / doesn't include some impression numbers for posts 
+    // sets 0 value of null scores - eg. BuzzFeed caches their API / doesn't include some impression numbers for posts
     if(score) {
       return score
     } return 0
@@ -28,6 +28,10 @@ class Article extends Component {
     if(imageUrl.substring(0,4) === 'http') {
       return imageUrl
     } return placeholder
+  }
+
+  componentDidMount() {
+
   }
 
   render() {

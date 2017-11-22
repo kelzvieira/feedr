@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import uuid from 'uuid'
+import moment from 'moment'
 import './css/normalize.css';
 import './css/html5bp.css';
 import './css/App.css';
-import placeholder1 from './images/article_placeholder_1.jpg';
+import placeholder from './images/purple-placeholder.png';
 import Header from './Header.js';
 import Article from './Article.js';
 import PopUp from './PopUp.js';
@@ -36,7 +37,8 @@ class App extends Component {
 
   getReddit(existingArticles, count) {
     // need to add pagination params - 'after' from the api payload plus count - up by 20s each call
-    return fetch('https://www.reddit.com/r/all.json?sort=top&limit=25')
+    const numArticles = count * 25 - 25
+    return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&count=${numArticles}`)
     .then(result => result.json())
     .then(reddit => {
       // add error logic to all content feeds for broken API calls
@@ -51,7 +53,7 @@ class App extends Component {
             articleId: uuid(),
             content: article.selftext,
             source: 'Reddit',
-            timestamp: article.data.created,
+            timestamp: article.data.created_utc,
             }
           return existingArticles.push(redditArticle)
         })
@@ -60,15 +62,14 @@ class App extends Component {
   }
 
   getBuzzFeed(existingArticles, count) {
-    // need to add pagination params - p = 1, 2 , 3 etc.
-    return fetch('https://accesscontrolalloworiginall.herokuapp.com/https://www.buzzfeed.com/api/v2/feeds/index')
+    return fetch(`https://accesscontrolalloworiginall.herokuapp.com/https://www.buzzfeed.com/api/v2/feeds/index?p=${count}`)
     .then(result => result.json())
     .then(buzzfeed => {
-      // need to add a throw error option
-      buzzfeed.big_stories.forEach(article => {
+      // need to add a throw error option success = 1
+      buzzfeed.buzzes.forEach(article => {
           const buzzfeedArticle = {
             title: article.title,
-            url: `https://www.buzzfeed.com/${article.canonical_path}`,
+            url: `https://www.buzzfeed.com${article.canonical_path}`,
             thumbnail: article.images.small,
             score: article.impressions,
             category: article.category,
@@ -84,9 +85,18 @@ class App extends Component {
   }
 
   getMashable(existingArticles, count) {
-    return fetch('https://accesscontrolalloworiginall.herokuapp.com/http://mashable.com/api/v1/posts')
+    return fetch(`https://accesscontrolalloworiginall.herokuapp.com/https://mashable.com/api/v1/posts?page=${count}`)
     .then(result => result.json())
     .then(mashable => {
+      // this part confuses me because isNaN should work the reverse of the way it is working :/
+        if (isNaN(mashable.collection.total)) {
+          console.log(mashable)
+          this.setState({
+          showLoader: false,
+          })
+          throw new Error('could not get posts from Mashable')
+        } else {
+      // add throw error - mashable.collection.total > 0
       mashable.posts.forEach(article => {
           const mashableArticle = {
             title: article.title,
@@ -102,7 +112,7 @@ class App extends Component {
         return existingArticles.push(mashableArticle)
       })
       return existingArticles
-    }).catch(err => {console.log('Error: ',err)})
+    }})
   }
 
   filterArticles(titleFilter,sourceFilter) {
@@ -116,6 +126,7 @@ class App extends Component {
     this.setState({
       popUpId: id,
     })
+    document.getElementById('popup').style.display = ''
   }
 
   componentDidMount() {
@@ -132,13 +143,14 @@ class App extends Component {
       this.setState({
         articles: articles.sort(function(a, b) {
           return a.timestamp - b.timestamp
-        }),
+        }).reverse(),
         // this finalises (ie.chronologically sorts) the list of articles for initial display and removes the loader from display
         showLoader: false,
         // this set is up so pagination will work correctly on the API fetch functions when they are called next
+        // by increasing the count after each API call (to then use as a pagination param)
         loadCount: this.state.loadCount +1,
       })
-    }).catch(err => {console.log('Error: ',err)})
+    }).catch(err => console.log('Error,', err))
     // just to check what data is coming in, log the full set of articles to the console
     console.log(this.state.articles)
   }
@@ -148,11 +160,11 @@ class App extends Component {
       <div>
         <Header onFilter={this.filterArticles}/>
         <Loader showLoader={this.state.showLoader}/>
-        {/* this.state.articles
-          .filter(article => article.articleId.includes(this.state.popUpId))
+        {this.state.articles
           .map(article =>
-            <PopUp articles={this.state.articles} id={this.state.popUpId}/>
-          ) */}
+            <PopUp articles={this.state.articles}
+              id={this.state.popUpId}/>
+          )}
         <section id="main" className="container">
           {this.state.articles
             // .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
@@ -164,13 +176,14 @@ class App extends Component {
               image={article.thumbnail}
               score={article.score}
               source={article.source}
-              key={article.articleId}
+              id={article.articleId}
               onPopUp={this.launchPopUp}
               onFilter={this.filterArticles}
             />
           )
         }
         </section>
+        {/* ADD BUTTON TO LOAD MORE ARTICLES */}
       </div>
     );
   }

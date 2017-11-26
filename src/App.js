@@ -28,7 +28,8 @@ class App extends Component {
     this.getReddit = this.getReddit.bind(this);
     this.getMashable = this.getMashable.bind(this);
     this.launchPopUp = this.launchPopUp.bind(this);
-    this.filterArticles = this.filterArticles.bind(this);
+    this.filterSource = this.filterSource.bind(this);
+    this.filterSearch = this.filterSearch.bind(this);
   }
   // constructor is only really needed if you have functions to bind
   // if there aren't any, you can go directly to setting the initial state
@@ -116,11 +117,16 @@ class App extends Component {
     }})
   }
 
-  filterArticles(titleFilter,sourceFilter) {
+  filterSource(sourceFilter) {
     this.setState({
-      filterTitle: titleFilter,
       filterSource: sourceFilter,
     })
+  }
+
+  filterSearch(titleFilter){
+    this.setState(prevState => ({
+        filterTitle: prevState.filterTitle + titleFilter
+    }))
   }
 
   launchPopUp(id) {
@@ -140,7 +146,7 @@ class App extends Component {
     // but only once the API call has resolved (it's a promise), ensuring there's no mutliple state setting
     .then(articles => this.getBuzzFeed(articles, this.state.loadCount))
     .then(articles => this.getMashable(articles, this.state.loadCount))
-    // replace .then notation with promise.all()
+    // replace .then notation with promise.all() + change loadCount functionality to use prevState function information
     .then(articles => {
       this.setState({
         articles: articles.sort(function(a, b) {
@@ -160,7 +166,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <Header onFilter={this.filterArticles} {...this.state}/>
+        <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>
         <Loader showLoader={this.state.showLoader}/>
         {this.state.articles
           .map(article =>
@@ -169,7 +175,7 @@ class App extends Component {
           )}
         <section id="main" className="container">
           {this.state.articles
-            // .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
+            .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
             .filter(article => article.source.includes(this.state.filterSource))
             // look at spread operator to pass state as an object {...this.state}
             .map(article =>
@@ -182,6 +188,7 @@ class App extends Component {
               id={article.articleId}
               onPopUp={this.launchPopUp}
               onFilter={this.filterArticles}
+              key={article.articleId}
             />
           )
           // use componentDidMount with the length of the articles array - 20 to start fetching the next set of articles when there's only

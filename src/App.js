@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import uuid from 'uuid'
-import moment from 'moment'
 import './css/normalize.css';
 import './css/html5bp.css';
 import './css/App.css';
@@ -161,7 +160,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <Header onFilter={this.filterArticles}/>
+        <Header onFilter={this.filterArticles} {...this.state}/>
         <Loader showLoader={this.state.showLoader}/>
         {this.state.articles
           .map(article =>

@@ -6,14 +6,21 @@ class Header extends Component {
     super(props)
 
     this.handleFilter = this.handleFilter.bind(this);
+    this.handleActivateSearch = this.handleActivateSearch.bind(this)
   }
 
   handleFilter(search, source) {
     this.props.onFilter(search,source)
   }
 
-  handleAtivateSearch() {
-    document.getElementById('search').className = 'active'
+  handleActivateSearch(currentClass) {
+    if (currentClass === '') {
+      document.getElementById('search').className = 'active'
+    } else {
+    console.log(document.getElementById('search').childNodes[0].value)
+    document.getElementById('search').className = ''
+    console.log(document.getElementById('search').className)
+    }
   }
 
   render() {
@@ -32,8 +39,8 @@ class Header extends Component {
               </li>
             </ul>
             <section id="search">
-              <input type="text" name="name" value="" />
-              <a href="#" onClick={this.handleActivateSearch}><img src={searchIcon} alt="" /></a>
+              <input type="text" name="name" value="" onKeyPress={() => this.handleFilter('',this.props.filterSource)}/>
+              <a href="#" onClick={() => this.handleActivateSearch(document.getElementById('search').className)}><img src={searchIcon} alt="" /></a>
             </section>
           </nav>
           <div className="clearfix"></div>

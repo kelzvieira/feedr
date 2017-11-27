@@ -124,9 +124,9 @@ class App extends Component {
   }
 
   filterSearch(titleFilter){
-    this.setState(prevState => ({
-        filterTitle: prevState.filterTitle + titleFilter
-    }))
+    this.setState({
+        filterTitle: titleFilter
+    })
   }
 
   launchPopUp(id) {

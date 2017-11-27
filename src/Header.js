@@ -45,7 +45,7 @@ class Header extends Component {
               </li>
             </ul>
             <section id="search">
-              <input type="text" name="name" value={this.props.filterTitle} onKeyPress={(event) => this.handleKeyPress(event.key)}/>
+              <input type="text" name="name" value={this.props.filterTitle} onChange={(event) => this.handleKeyPress(event.target.value)}/>
               <a href="#" onClick={() => this.handleActivateSearch(document.getElementById('search').className)}><img src={searchIcon} alt="" /></a>
             </section>
           </nav>

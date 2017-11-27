@@ -163,7 +163,7 @@ class App extends Component {
     console.log(this.state.articles)
   }
 
-  render() {
+  render() {om
     return (
       <div>
         <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>

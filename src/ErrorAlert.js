@@ -5,7 +5,7 @@ class ErrorAlert extends Component {
     if(this.props.showError) {
       return(
         <div className="error">
-          <div className="error-message">Error message goes here</div>
+          <div className="error-message">{this.props.errorMessage}</div>
         </div>
       );
     } else {

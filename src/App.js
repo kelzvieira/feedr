@@ -5,7 +5,7 @@ import './css/html5bp.css';
 import './css/App.css';
 import placeholder from './images/purple-placeholder.png';
 import Header from './Header';
-import Article from './Article';
+import ArticleRender from './ArticleRender';
 import PopUp from './PopUp';
 import Loader from './Loader';
 import ErrorAlert from './ErrorAlert';
@@ -17,6 +17,7 @@ class App extends Component {
     this.state = {
       showLoader: true,
       showError: false,
+      errorMessage: '',
       articles: [],
       filterSource: '',
       filterTitle: '',
@@ -42,22 +43,32 @@ class App extends Component {
     return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&count=${count * 25 - 25}`)
     .then(result => result.json())
     .then(reddit => {
-      // add error logic here for broken API call
-      return reddit.data.children.map(article => { return {
-            title: article.data.title,
-            url: `https://www.reddit.com${article.data.permalink}`,
-            thumbnail: article.data.thumbnail,
-            score: article.data.score,
-            category: article.data.subreddit,
-            articleId: uuid(),
-            content: article.selftext,
-            // I've included source just to make it visible that sorting is working
-            // can remove in final build
-            source: 'Reddit',
-            timestamp: article.data.created_utc,
-        }
-      })
-    })
+      if (reddit.data.children[0].kind !== "t3") {
+        console.log(reddit)
+        this.setState({
+        showLoader: false,
+        showError: true,
+        })
+        throw new Error('could not get posts from Reddit')
+      } else {
+        return reddit.data.children.map(article => { return {
+              title: article.data.title,
+              url: `https://www.reddit.com${article.data.permalink}`,
+              thumbnail: article.data.thumbnail,
+              score: article.data.score,
+              category: article.data.subreddit,
+              articleId: uuid(),
+              content: article.selftext,
+              // I've included source just to make it visible that sorting is working
+              // can remove in final build
+              source: 'Reddit',
+              timestamp: article.data.created_utc,
+          }
+        })
+      }
+    }).catch(err => this.setState({
+      errorMessage: err
+    }))
   }
 
   getBuzzFeed(count) {
@@ -83,11 +94,11 @@ class App extends Component {
             content: article.description,
             source: 'BuzzFeed',
             timestamp: article.published,
-        }
-      })
-    }
-  })
-}
+          }
+        })
+      }
+    })
+  }
 
   getMashable(count) {
     return fetch(`https://accesscontrolalloworiginall.herokuapp.com/https://mashable.com/api/v1/posts?page=${count}`)
@@ -98,6 +109,7 @@ class App extends Component {
           console.log(mashable)
           this.setState({
           showLoader: false,
+          showError: true,
           })
           throw new Error('could not get posts from Mashable')
         } else {
@@ -121,7 +133,6 @@ class App extends Component {
     Promise.all([this.getMashable(this.state.loadCount),this.getBuzzFeed(this.state.loadCount),this.getReddit(this.state.loadCount)])
     .then((response) => {
       const newFeed = [].concat.apply([], response)
-      console.log(newFeed)
       this.setState((prevState) => { return {
         articles: newFeed.sort((a,b) => {
           return a.timestamp - b.timestamp
@@ -132,9 +143,8 @@ class App extends Component {
         // by increasing the count after each API call (to then use as a pagination param)
         loadCount: prevState.loadCount +1,
       }})
-      console.log(this.state.articles)
-      })
-      .catch(err => console.log('Error,', err))
+    })
+    .catch(err => console.log('Error,', err))
   }
 
   filterSource(sourceFilter) {
@@ -156,8 +166,8 @@ class App extends Component {
     document.getElementById('popup').style.display = ''
   }
 
-
   componentDidMount() {
+    // set this as a function so that I can call it for endless-scroll as well
     this.fetchArticles()
   }
 
@@ -166,14 +176,20 @@ class App extends Component {
       <div>
         <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>
         <Loader showLoader={this.state.showLoader}/>
-        <ErrorAlert showError={this.state.showError}/>
+        <ErrorAlert showError={this.state.showError} {...this.state}/>
+        <ArticleRender
+          onPopUp={this.launchPopUp}
+          onFilter={this.filterArticles}
+          {...this.state}
+        />
+
         {this.state.articles
           .map(article =>
             <PopUp articles={this.state.articles}
               id={this.state.popUpId}/>
           )}
         <section id="main" className="container">
-          {this.state.articles
+          {/* this.state.articles
             .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
             .filter(article => article.source.includes(this.state.filterSource))
             // look at spread operator to pass all of state as an object {...this.state}
@@ -189,13 +205,13 @@ class App extends Component {
                 onFilter={this.filterArticles}
                 key={article.articleId}
                 timestamp={article.timestamp}
+                {...this.state}
               />
             )
-          }
+          */}
         </section>
       </div>
     );
-
   }
 
 }

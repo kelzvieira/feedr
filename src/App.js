@@ -4,11 +4,11 @@ import './css/normalize.css';
 import './css/html5bp.css';
 import './css/App.css';
 import placeholder from './images/purple-placeholder.png';
-import Header from './Header.js';
-import Article from './Article.js';
-import PopUp from './PopUp.js';
-import Loader from './Loader.js';
-
+import Header from './Header';
+import Article from './Article';
+import PopUp from './PopUp';
+import Loader from './Loader';
+import ErrorAlert from './ErrorAlert';
 
 class App extends Component {
   constructor(props) {
@@ -16,6 +16,7 @@ class App extends Component {
 
     this.state = {
       showLoader: true,
+      showError: false,
       articles: [],
       filterSource: '',
       filterTitle: '',
@@ -37,12 +38,11 @@ class App extends Component {
   // even when done directly, you still need to access state through this.state to refence states in components
 
   getReddit(count) {
-    // need to add pagination params - 'after' from the api payload plus count - up by 20s each call
-    const numArticles = count * 25 - 25
-    return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&count=${numArticles}`)
+    // count * 25 to add pagination params - up by 25 each call starting from 0
+    return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&count=${count * 25 - 25}`)
     .then(result => result.json())
     .then(reddit => {
-      // add error logic to all content feeds for broken API calls
+      // add error logic here for broken API call
       return reddit.data.children.map(article => { return {
             title: article.data.title,
             url: `https://www.reddit.com${article.data.permalink}`,
@@ -51,8 +51,8 @@ class App extends Component {
             category: article.data.subreddit,
             articleId: uuid(),
             content: article.selftext,
-            // I've included these just to make it visible that sorting is working
-            // can remove in final build (but I kind of like them)
+            // I've included source just to make it visible that sorting is working
+            // can remove in final build
             source: 'Reddit',
             timestamp: article.data.created_utc,
         }
@@ -68,6 +68,7 @@ class App extends Component {
         console.log(buzzfeed)
         this.setState({
         showLoader: false,
+        showError: true,
         })
         throw new Error('could not get posts from Buzzfeed')
       } else {
@@ -157,13 +158,7 @@ class App extends Component {
 
 
   componentDidMount() {
-    // not neccessary to pass in existing this.state.articles as it would be an empty array on componentDidMount
-    // but this way it's scaleable for when calling the next set of articles when a user scrolls all the way down
-    // this exact code can be made into another function and then called here later on
-    // then it can be called here rather than keeping the code here
     this.fetchArticles()
-    // just to check what data is coming in, log the full set of articles to the console
-    console.log(this.state.articles)
   }
 
   render() {
@@ -171,6 +166,7 @@ class App extends Component {
       <div>
         <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>
         <Loader showLoader={this.state.showLoader}/>
+        <ErrorAlert showError={this.state.showError}/>
         {this.state.articles
           .map(article =>
             <PopUp articles={this.state.articles}
@@ -180,23 +176,22 @@ class App extends Component {
           {this.state.articles
             .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
             .filter(article => article.source.includes(this.state.filterSource))
-            // look at spread operator to pass state as an object {...this.state}
+            // look at spread operator to pass all of state as an object {...this.state}
             .map(article =>
-            <Article
-              title={article.title}
-              category={article.category}
-              image={article.thumbnail}
-              score={article.score}
-              source={article.source}
-              id={article.articleId}
-              onPopUp={this.launchPopUp}
-              onFilter={this.filterArticles}
-              key={article.articleId}
-              timestamp={article.timestamp}
-            />
-          )
-          // use componentDidMount with the length of the articles array - 20 to start fetching the next set of articles when there's only
-        }
+              <Article
+                title={article.title}
+                category={article.category}
+                image={article.thumbnail}
+                score={article.score}
+                source={article.source}
+                id={article.articleId}
+                onPopUp={this.launchPopUp}
+                onFilter={this.filterArticles}
+                key={article.articleId}
+                timestamp={article.timestamp}
+              />
+            )
+          }
         </section>
       </div>
     );

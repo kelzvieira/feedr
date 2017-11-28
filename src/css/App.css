@@ -4,12 +4,13 @@
   margin: 0 auto;
 }
 
-.popUp, .loader {
+.popUp, .loader, .error {
   opacity: 0.95;
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
+  margin: auto;
   height: 100%;
   background:  #fff;
 }
@@ -28,6 +29,18 @@
   background-size: 30px 30px;
   background-repeat: no-repeat;
   background-position: center center;
+}
+
+.error-message {
+  width: 200px;
+  margin: auto;
+  margin-top: 50px;
+  display: block;
+  padding: 20px;
+  border: 1px solid #f26161;
+  text-align: center;
+  background-color: #f6b2b2;
+  color: #872929;
 }
 
 .popUp .container {

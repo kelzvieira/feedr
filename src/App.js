@@ -23,6 +23,7 @@ class App extends Component {
       popUpId: '',
       // reserving this for 'paginated' API calls on user scroll
       loadCount: 1,
+      redditPagination: '',
     }
 
     this.getBuzzdFeed = this.getBuzzFeed.bind(this);
@@ -39,7 +40,7 @@ class App extends Component {
 
   getReddit(count) {
     // count * 25 to add pagination params - up by 25 each call starting from 0
-    return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&count=${count * 25 - 25}`)
+    return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&after=${this.state.redditPagination}&count=${count * 25 - 25}`)
     .then(result => result.json())
     .then(reddit => {
       if (reddit.data.children[0].kind !== "t3") {
@@ -50,6 +51,10 @@ class App extends Component {
         })
         throw new Error('could not get posts from Reddit')
       } else {
+        // reddit needs the 'after' value to show paginated results
+        this.setState({
+          redditPagination: reddit.data.after
+        })
         return reddit.data.children.map(article => { return {
               title: article.data.title,
               url: `https://www.reddit.com${article.data.permalink}`,
@@ -66,6 +71,7 @@ class App extends Component {
         })
       }
     }).catch(err => this.setState({
+      // trying to display the correct error message to the user
       errorMessage: err
     }))
   }
@@ -129,13 +135,16 @@ class App extends Component {
   }
 
   fetchArticles() {
+    this.setState({
+      showLoader: true,
+    })
     Promise.all([this.getMashable(this.state.loadCount),this.getBuzzFeed(this.state.loadCount),this.getReddit(this.state.loadCount)])
     .then((response) => {
       const newFeed = [].concat.apply([], response)
       this.setState((prevState) => { return {
-        articles: newFeed.sort((a,b) => {
+        articles: prevState.articles.concat(newFeed.sort((a,b) => {
           return a.timestamp - b.timestamp
-        }).reverse(),
+        }).reverse()),
         // this finalises (ie.chronologically sorts) the list of articles for initial display and removes the loader from display
         showLoader: false,
         // this set is up so pagination will work correctly on the API fetch functions when they are called next
@@ -144,6 +153,7 @@ class App extends Component {
       }})
     })
     .catch(err => console.log('Error,', err))
+
   }
 
   filterSource(sourceFilter) {
@@ -203,6 +213,8 @@ class App extends Component {
               />
             )
           }
+          {/* For now, it's a button. Eventually, it will fire on scroll */}
+          <button className='load-more' onClick={() => this.fetchArticles()}>Load more articles</button>
         </section>
       </div>
     );

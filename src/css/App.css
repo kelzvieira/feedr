@@ -51,7 +51,7 @@
   margin-bottom: 0;
 }
 
-.popUp .popUpAction {
+.popUp .popUpAction, .load-more {
   padding: 10px;
   background-color: #4F0486;
   color: #fff;
@@ -60,6 +60,7 @@
   transform: 0.2s all;
   margin-top: 30px;
   display: inline-block;
+  margin-bottom: 15px;
 }
 
 .popUp .popUpAction:hover {

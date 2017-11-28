@@ -26,7 +26,6 @@ class Header extends Component {
 
   handleKeyPress(key){
     this.props.onSearch(key)
-    console.log(key)
   }
 
   render() {

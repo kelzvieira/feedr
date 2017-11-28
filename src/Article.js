@@ -3,59 +3,53 @@ import PropTypes from 'prop-types';
 import placeholder from './images/purple-placeholder.png';
 import moment from 'moment';
 
-function Article(props) {
-    return Object.keys(props.articles).map(key =>
+class Article extends Component {
+  constructor(props) {
+    super(props)
+
+    this.popUp = this.popUp.bind(this);
+    this.setThumbnail = this.setThumbnail.bind(this);
+    this.setScore = this.setScore.bind(this)
+    this.setDate = this.setDate.bind(this)
+  }
+
+  popUp() {
+    this.props.onPopUp(this.props.id)
+  }
+
+  setScore(score){
+    // sets 0 value of null scores - eg. BuzzFeed caches their API / doesn't include some impression numbers for posts
+    if(score) {
+      return score
+    } return 0
+  }
+
+  setThumbnail(imageUrl) {
+    // sets the default image if an image url is not supplied - eg. Reddit has 'default' if no thumbnail image is set
+    if(imageUrl.substring(0,4) === 'http') {
+      return imageUrl
+    } return placeholder
+  }
+
+  setDate(date) {
+    return moment.unix(date)
+  }
+
+  render() {
+    return(
       <article className="article">
         <section className="featuredImage">
-          <img src={props.articles[key].thumbnail} alt={props.articles[key].source} />
+          <img src={this.setThumbnail(this.props.image)} alt="" />
         </section>
         <section className="articleContent">
-            <a href="#" ><h3>{props.articles[key].title}</h3></a>
-            <h6>{props.articles[key].category}&nbsp;&nbsp;&nbsp;
-              <b>source:</b> {props.articles[key].source} &nbsp;&nbsp;&nbsp;
-              <b>posted:</b> {props.articles[key].timestamp}
-            </h6>
+            <a href="#" onClick={() => this.popUp()}><h3>{this.props.title}</h3></a>
+            <h6>{this.props.category}&nbsp;&nbsp;&nbsp;<b>source:</b> {this.props.source} &nbsp;&nbsp;&nbsp;<b>posted:</b> {this.setDate(this.props.timestamp).format("ddd, MMM Do YYYY, h:mm:ss a")}</h6>
         </section>
         <section className="impressions">
-          {props.articles[key].score}
+          {this.setScore(this.props.score)}
         </section>
         <div className="clearfix"></div>
       </article>
-
-      // .filter(article => article.title.toLowerCase().includes(this.props.filterTitle.toLowerCase()))
-      // .filter(article => article.source.includes(this.props.filterSource))
-
-  )
-}
-
-/*
-
-
-  render() {
-    return (
-      <div>
-          {this.props.articles
-            .filter(article => article.title.toLowerCase().includes(this.props.filterTitle.toLowerCase()))
-            .filter(article => article.source.includes(this.props.filterSource))
-            // look at spread operator to pass all of state as an object {...this.state}
-            .map(article =>
-              <article className="article">
-                <section className="featuredImage">
-                  <img src={this.setThumbnail(article.image)} alt={article.source} />
-                </section>
-                <section className="articleContent">
-                    <a href="#" onClick={() => this.popUp()}><h3>{article.title}</h3></a>
-                    <h6>{this.props.category}&nbsp;&nbsp;&nbsp;<b>source:</b> {article.source} &nbsp;&nbsp;&nbsp;<b>posted:</b> {this.setDate(this.props.timestamp).format("ddd, MMM Do YYYY, h:mm:ss a")}</h6>
-                </section>
-                <section className="impressions">
-                  {this.setScore(article.score)}
-                </section>
-                <div className="clearfix"></div>
-              </article>
-            )
-          }
-          {console.log(this.props)}
-        </div>
     );
   }
 }
@@ -66,6 +60,6 @@ Article.PropTypes = {
   category: PropTypes.string,
   score: PropTypes.number,
   id: PropTypes.string.isRequired,
-} */
+}
 
 export default Article

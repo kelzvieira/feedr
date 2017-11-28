@@ -3,9 +3,8 @@ import uuid from 'uuid'
 import './css/normalize.css';
 import './css/html5bp.css';
 import './css/App.css';
-import placeholder from './images/purple-placeholder.png';
 import Header from './Header';
-import ArticleRender from './ArticleRender';
+import Article from './Article';
 import PopUp from './PopUp';
 import Loader from './Loader';
 import ErrorAlert from './ErrorAlert';
@@ -176,12 +175,7 @@ class App extends Component {
       <div>
         <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>
         <Loader showLoader={this.state.showLoader}/>
-        <ErrorAlert showError={this.state.showError} {...this.state}/>
-        <ArticleRender
-          onPopUp={this.launchPopUp}
-          onFilter={this.filterArticles}
-          {...this.state}
-        />
+        <ErrorAlert {...this.state}/>
 
         {this.state.articles
           .map(article =>
@@ -189,7 +183,7 @@ class App extends Component {
               id={this.state.popUpId}/>
           )}
         <section id="main" className="container">
-          {/* this.state.articles
+          {this.state.articles
             .filter(article => article.title.toLowerCase().includes(this.state.filterTitle.toLowerCase()))
             .filter(article => article.source.includes(this.state.filterSource))
             // look at spread operator to pass all of state as an object {...this.state}
@@ -208,7 +202,7 @@ class App extends Component {
                 {...this.state}
               />
             )
-          */}
+          }
         </section>
       </div>
     );

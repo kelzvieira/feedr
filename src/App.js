@@ -30,21 +30,20 @@ class App extends Component {
     this.launchPopUp = this.launchPopUp.bind(this);
     this.filterSource = this.filterSource.bind(this);
     this.filterSearch = this.filterSearch.bind(this);
+    this.fetchArticles = this.fetchArticles.bind(this);
   }
   // constructor is only really needed if you have functions to bind
   // if there aren't any, you can go directly to setting the initial state
   // even when done directly, you still need to access state through this.state to refence states in components
 
-  getReddit(existingArticles, count) {
+  getReddit(count) {
     // need to add pagination params - 'after' from the api payload plus count - up by 20s each call
     const numArticles = count * 25 - 25
     return fetch(`https://www.reddit.com/r/all.json?sort=new&limit=25&count=${numArticles}`)
     .then(result => result.json())
     .then(reddit => {
       // add error logic to all content feeds for broken API calls
-      const redditAfter = reddit.data.after
-      reddit.data.children.forEach(article => {
-          const redditArticle = {
+      return reddit.data.children.map(article => { return {
             title: article.data.title,
             url: `https://www.reddit.com${article.data.permalink}`,
             thumbnail: article.data.thumbnail,
@@ -56,20 +55,24 @@ class App extends Component {
             // can remove in final build (but I kind of like them)
             source: 'Reddit',
             timestamp: article.data.created_utc,
-            }
-          return existingArticles.push(redditArticle)
-        })
-      return existingArticles
-    }).catch(err => {console.log('Error: ',err)})
+        }
+      })
+    })
   }
 
-  getBuzzFeed(existingArticles, count) {
+  getBuzzFeed(count) {
     return fetch(`https://accesscontrolalloworiginall.herokuapp.com/https://www.buzzfeed.com/api/v2/feeds/index?p=${count}`)
     .then(result => result.json())
     .then(buzzfeed => {
+      if (buzzfeed.success !== 1) {
+        console.log(buzzfeed)
+        this.setState({
+        showLoader: false,
+        })
+        throw new Error('could not get posts from Buzzfeed')
+      } else {
       // need to add a throw error option success = 1
-      buzzfeed.buzzes.forEach(article => {
-          const buzzfeedArticle = {
+      return buzzfeed.buzzes.map(article => { return {
             title: article.title,
             url: `https://www.buzzfeed.com${article.canonical_path}`,
             thumbnail: article.images.small,
@@ -79,18 +82,17 @@ class App extends Component {
             content: article.description,
             source: 'BuzzFeed',
             timestamp: article.published,
-          }
-        return existingArticles.push(buzzfeedArticle)
+        }
       })
-      return existingArticles
-    }).catch(err => {console.log('Error: ',err)})
-  }
+    }
+  })
+}
 
-  getMashable(existingArticles, count) {
+  getMashable(count) {
     return fetch(`https://accesscontrolalloworiginall.herokuapp.com/https://mashable.com/api/v1/posts?page=${count}`)
     .then(result => result.json())
     .then(mashable => {
-      // this part confuses me because isNaN should work the reverse of the way it is working :/
+      // this part confuses me because isNaN should work the reverse of the way it is working now :/
         if (isNaN(mashable.collection.total)) {
           console.log(mashable)
           this.setState({
@@ -98,23 +100,40 @@ class App extends Component {
           })
           throw new Error('could not get posts from Mashable')
         } else {
-      // add throw error - mashable.collection.total > 0
-      mashable.posts.forEach(article => {
-          const mashableArticle = {
-            title: article.title,
-            url: article.link,
-            thumbnail: article.images.i540x304,
-            score: article.shares.total,
-            category: article.channel_name,
-            articleId: uuid(),
-            content: article.content.excerpt,
-            source: 'Mashable',
-            timestamp: new Date(article.post_date).getTime() /1000,
+        // add throw error - mashable.collection.total > 0
+          return mashable.posts.map(article => { return {
+                title: article.title,
+                url: article.link,
+                thumbnail: article.images.i540x304,
+                score: article.shares.total,
+                category: article.channel_name,
+                articleId: uuid(),
+                content: article.content.excerpt,
+                source: 'Mashable',
+                timestamp: new Date(article.post_date).getTime() /1000,
+              }})
           }
-        return existingArticles.push(mashableArticle)
       })
-      return existingArticles
-    }})
+  }
+
+  fetchArticles() {
+    Promise.all([this.getMashable(this.state.loadCount),this.getBuzzFeed(this.state.loadCount),this.getReddit(this.state.loadCount)])
+    .then((response) => {
+      const newFeed = [].concat.apply([], response)
+      console.log(newFeed)
+      this.setState((prevState) => { return {
+        articles: newFeed.sort((a,b) => {
+          return a.timestamp - b.timestamp
+        }).reverse(),
+        // this finalises (ie.chronologically sorts) the list of articles for initial display and removes the loader from display
+        showLoader: false,
+        // this set is up so pagination will work correctly on the API fetch functions when they are called next
+        // by increasing the count after each API call (to then use as a pagination param)
+        loadCount: prevState.loadCount +1,
+      }})
+      console.log(this.state.articles)
+      })
+      .catch(err => console.log('Error,', err))
   }
 
   filterSource(sourceFilter) {
@@ -136,34 +155,18 @@ class App extends Component {
     document.getElementById('popup').style.display = ''
   }
 
+
   componentDidMount() {
     // not neccessary to pass in existing this.state.articles as it would be an empty array on componentDidMount
     // but this way it's scaleable for when calling the next set of articles when a user scrolls all the way down
     // this exact code can be made into another function and then called here later on
     // then it can be called here rather than keeping the code here
-    this.getReddit(this.state.articles, this.state.loadCount)
-    // this runs getReddit, returns the reddit articles and passes them as arguments to the next function
-    // but only once the API call has resolved (it's a promise), ensuring there's no mutliple state setting
-    .then(articles => this.getBuzzFeed(articles, this.state.loadCount))
-    .then(articles => this.getMashable(articles, this.state.loadCount))
-    // replace .then notation with promise.all() + change loadCount functionality to use prevState function information
-    .then(articles => {
-      this.setState({
-        articles: articles.sort(function(a, b) {
-          return a.timestamp - b.timestamp
-        }).reverse(),
-        // this finalises (ie.chronologically sorts) the list of articles for initial display and removes the loader from display
-        showLoader: false,
-        // this set is up so pagination will work correctly on the API fetch functions when they are called next
-        // by increasing the count after each API call (to then use as a pagination param)
-        loadCount: this.state.loadCount +1,
-      })
-    }).catch(err => console.log('Error,', err))
+    this.fetchArticles()
     // just to check what data is coming in, log the full set of articles to the console
     console.log(this.state.articles)
   }
 
-  render() {om
+  render() {
     return (
       <div>
         <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>
@@ -189,14 +192,15 @@ class App extends Component {
               onPopUp={this.launchPopUp}
               onFilter={this.filterArticles}
               key={article.articleId}
+              timestamp={article.timestamp}
             />
           )
           // use componentDidMount with the length of the articles array - 20 to start fetching the next set of articles when there's only
         }
         </section>
-        {/* ADD BUTTON TO LOAD MORE ARTICLES */}
       </div>
     );
+
   }
 
 }

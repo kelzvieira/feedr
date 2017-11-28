@@ -1,15 +1,16 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 import placeholder from './images/purple-placeholder.png';
+import moment from 'moment';
 
 class Article extends Component {
-
   constructor(props) {
     super(props)
 
     this.popUp = this.popUp.bind(this);
     this.setThumbnail = this.setThumbnail.bind(this);
     this.setScore = this.setScore.bind(this)
+    this.setDate = this.setDate.bind(this)
   }
 
   popUp() {
@@ -30,8 +31,12 @@ class Article extends Component {
     } return placeholder
   }
 
-  componentDidMount() {
+  setDate(date) {
+    return moment.unix(date)
+  }
 
+  componentDidMount() {
+    
   }
 
   render() {
@@ -42,7 +47,7 @@ class Article extends Component {
         </section>
         <section className="articleContent">
             <a href="#" onClick={() => this.popUp()}><h3>{this.props.title}</h3></a>
-            <h6>{this.props.category}&nbsp;&nbsp;&nbsp;<b>source: {this.props.source}</b></h6>
+            <h6>{this.props.category}&nbsp;&nbsp;&nbsp;<b>source:</b> {this.props.source} &nbsp;&nbsp;&nbsp;<b>posted:</b> {this.setDate(this.props.timestamp).format("ddd, MMM Do YYYY, h:mm:ss a")}</h6>
         </section>
         <section className="impressions">
           {this.setScore(this.props.score)}

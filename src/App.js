@@ -33,6 +33,7 @@ class App extends Component {
     this.filterSource = this.filterSource.bind(this);
     this.filterSearch = this.filterSearch.bind(this);
     this.fetchArticles = this.fetchArticles.bind(this);
+    this.setErrorMessage = this.setErrorMessage.bind(this);
   }
   // constructor is only really needed if you have functions to bind
   // if there aren't any, you can go directly to setting the initial state
@@ -70,10 +71,13 @@ class App extends Component {
           }
         })
       }
-    }).catch(err => this.setState({
-      // trying to display the correct error message to the user
-      errorMessage: err
-    }))
+    }).catch(err => this.setErrorMessage(err))
+  }
+
+  setErrorMessage(err) {
+    this.setState({
+      errorMessage: `${err}.\n Please wait a while and then try again.`,
+    })
   }
 
   getBuzzFeed(count) {
@@ -102,7 +106,7 @@ class App extends Component {
           }
         })
       }
-    })
+    }).catch(err => this.setErrorMessage(err))
   }
 
   getMashable(count) {
@@ -118,6 +122,7 @@ class App extends Component {
           })
           throw new Error('could not get posts from Mashable')
         } else {
+          console.log(mashable)
         // add throw error - mashable.collection.total > 0
           return mashable.posts.map(article => { return {
                 title: article.title,
@@ -131,7 +136,7 @@ class App extends Component {
                 timestamp: new Date(article.post_date).getTime() /1000,
               }})
           }
-      })
+      }).catch(err => this.setErrorMessage(err))
   }
 
   fetchArticles() {
@@ -141,6 +146,7 @@ class App extends Component {
     Promise.all([this.getMashable(this.state.loadCount),this.getBuzzFeed(this.state.loadCount),this.getReddit(this.state.loadCount)])
     .then((response) => {
       const newFeed = [].concat.apply([], response)
+      console.log(newFeed)
       this.setState((prevState) => { return {
         articles: prevState.articles.concat(newFeed.sort((a,b) => {
           return a.timestamp - b.timestamp
@@ -153,7 +159,6 @@ class App extends Component {
       }})
     })
     .catch(err => console.log('Error,', err))
-
   }
 
   filterSource(sourceFilter) {
@@ -181,7 +186,9 @@ class App extends Component {
   }
 
   render() {
-    return (
+    if(this.state.showError) {
+      return <ErrorAlert {...this.state}/>
+    } return (
       <div>
         <Header onFilter={this.filterSource} onSearch={this.filterSearch} {...this.state}/>
         <Loader showLoader={this.state.showLoader}/>
